@@ -3,7 +3,7 @@ import { AgGridReact } from 'ag-grid-react'
 import 'ag-grid-community/dist/styles/ag-grid.css'
 import 'ag-grid-community/dist/styles/ag-theme-material.css';
 import Addcar from './Addcar';
-
+import Editcar from './Editcar'
 import Button from '@mui/material/Button';
 
 export default function Carlist() {
@@ -20,22 +20,31 @@ export default function Carlist() {
    }
 
    const columns = [
-      {field: "brand", sortable: true, filter: true, editable: true },
-      {field: "model", sortable: true, filter: true, editable: true },
-      {field: "color", sortable: true, filter: true, editable: true },
-      {field: "fuel", sortable: true, filter: true, editable: true },
-      {field: "year", sortable: true, filter: true, editable: true },
-      {field: "price", sortable: true, filter: true, editable: true },
+      {field: "brand", sortable: true, filter: true },
+      {field: "model", sortable: true, filter: true },
+      {field: "color", sortable: true, filter: true },
+      {field: "fuel", sortable: true, filter: true },
+      {field: "year", sortable: true, filter: true },
+      {field: "price", sortable: true, filter: true},
+      {headerName: '', field: '_links.self.href', width: 80, 
+      cellRendererFramework: params =>
+         <Editcar link={params.value} car={params.data} editCar={editCar}/>
+      },
+      {headerName: '', field: '_links.self.href', width: 80,
+      cellRendererFramework: params =>
+         <Button style={{margin: '10px'}} variant="outlined" onClick={() => deleteCar(params.value)}>
+            Delete 
+         </Button>
+      }
       
    ]
 
-   const deleteCar = () => {
-      if (gridRef.current.getSelectedNodes().length > 0) {
-         setCars(cars.filter((cars, index) =>
-         index !== gridRef.current.getSelectedNodes()[0].childIndex))
-      } else {
-         alert("Select row first!")
-      }
+   const deleteCar = (link) => {
+     if(window.confirm('Are you sure?')) {
+        fetch(link, {method: 'DELETE'})
+        .then(res => fetchData())
+        .catch(err => console.error(err))
+     }   
    }
 
 
@@ -51,6 +60,17 @@ export default function Carlist() {
       .catch(err => console.error(err))
    }
    
+   const editCar = (link, car) => {
+      fetch(link, {
+         method: 'PUT',
+         headers: {
+            'Content-Type': 'application/json'
+         },
+         body: JSON.stringify(car)
+      })
+      .then(res => fetchData())
+      .catch(err => console.error(err))
+   }
  
    
 
@@ -58,8 +78,6 @@ export default function Carlist() {
       <div className="ag-theme-material"
       style={{height: '700px', width: '70%', margin: 'auto'}}>
       <Addcar saveCar={saveCar}/>
-      
-      <Button style={{margin: '10px'}} variant="outlined" onClick={deleteCar}>Delete Car</Button>
       <AgGridReact
          ref={gridRef}
          onGridReady={ params => gridRef.current = params.api }
